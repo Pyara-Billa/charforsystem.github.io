@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progress Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <canvas id="myChart"></canvas>
+    <button onclick="addNewProgress()">Add Today's Progress</button>
+    <button onclick="clearLastEntry()">Clear Last Entered Data</button>
+    <button onclick="showLastWeek()">Show Last Week</button>
+    <button onclick="showLastMonth()">Show Last Month</button>
+    <button onclick="showLastYear()">Show Last Year</button>
+    <button onclick="showAll()">Show All</button>
+
+    <script>
+        function getStoredProgress() {
+            return JSON.parse(localStorage.getItem('progressData')) || { dates: [], values: [] };
+        }
+
+        function saveProgress(dates, values) {
+            localStorage.setItem('progressData', JSON.stringify({ dates, values }));
+        }
+
+        function addNewProgress() {
+            let progressData = getStoredProgress();
+            let today = new Date().toISOString().split('T')[0]; // Format YYYY-MM-DD
+
+            let newValue = prompt("Enter today's progress value:");
+            if (newValue === null || newValue === "") return;
+
+            progressData.dates.push(today);
+            progressData.values.push(parseInt(newValue));
+
+            saveProgress(progressData.dates, progressData.values);
+            updateChart(progressData);
+        }
+
+        function clearLastEntry() {
+            let progressData = getStoredProgress();
+
+            if (progressData.dates.length === 0) {
+                alert("No data to remove!");
+                return;
+            }
+
+            let removedDate = progressData.dates.pop();
+            let removedValue = progressData.values.pop();
+
+            saveProgress(progressData.dates, progressData.values);
+            updateChart(progressData);
+
+            alert(`Removed last entry: ${removedDate} (${removedValue})`);
+        }
+
+        function filterProgress(days) {
+            let progressData = getStoredProgress();
+            let filterDate = new Date();
+            filterDate.setDate(filterDate.getDate() - days);
+            
+            let filteredDates = [];
+            let filteredValues = [];
+
+            for (let i = 0; i < progressData.dates.length; i++) {
+                if (new Date(progressData.dates[i]) >= filterDate) {
+                    filteredDates.push(progressData.dates[i]);
+                    filteredValues.push(progressData.values[i]);
+                }
+            }
+            return { dates: filteredDates, values: filteredValues };
+        }
+
+        function showLastWeek() {
+            updateChart(filterProgress(7));
+        }
+
+        function showLastMonth() {
+            updateChart(filterProgress(30));
+        }
+
+        function showLastYear() {
+            updateChart(filterProgress(365));
+        }
+
+        function showAll() {
+            updateChart(getStoredProgress());
+        }
+
+        function updateChart(progressData) {
+            myChart.data.labels = progressData.dates;
+            myChart.data.datasets[0].data = progressData.values;
+            myChart.update();
+        }
+
+        let progressData = getStoredProgress();
+
+        const ctx = document.getElementById('myChart').getContext('2d');
+        const myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: progressData.dates,
+                datasets: [{
+                    label: 'Progress',
+                    data: progressData.values,
+                    borderColor: 'blue',
+                    borderWidth: 2
+                }]
+            },
+            options: { responsive: true }
+        });
+    </script>
+</body>
+</html>
