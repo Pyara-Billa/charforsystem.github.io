@@ -8,7 +8,7 @@
 </head>
 <body>
     <canvas id="myChart"></canvas>
-    <button onclick="addNewProgress()">Add Today's Progress</button>
+    <button id="addProgressBtn">Add Today's Progress</button>
     <button onclick="clearLastEntry()">Clear Last Entered Data</button>
     <button onclick="showLastWeek()">Show Last Week</button>
     <button onclick="showLastMonth()">Show Last Month</button>
@@ -24,18 +24,21 @@
             localStorage.setItem('progressData', JSON.stringify({ dates, values }));
         }
 
-        function addNewProgress() {
+        async function addNewProgress() {
             let progressData = getStoredProgress();
             let today = new Date().toISOString().split('T')[0]; // Format YYYY-MM-DD
 
             let newValue = prompt("Enter today's progress value:");
-            if (newValue === null || newValue === "") return;
+            if (!newValue) return;
 
             progressData.dates.push(today);
             progressData.values.push(parseInt(newValue));
 
             saveProgress(progressData.dates, progressData.values);
             updateChart(progressData);
+
+            // Auto-refresh to show updated data
+            setTimeout(() => location.reload(), 500);
         }
 
         function clearLastEntry() {
@@ -110,6 +113,8 @@
             },
             options: { responsive: true }
         });
+
+        document.getElementById("addProgressBtn").addEventListener("click", addNewProgress);
     </script>
 </body>
 </html>
